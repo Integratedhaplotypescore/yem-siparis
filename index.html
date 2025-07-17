@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yem Sipariş Takip</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+    }
+    .liste-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+      flex-wrap: wrap;
+    }
+    .liste-item span {
+      flex: 1 1 auto;
+      margin-right: 10px;
+    }
+    .sil-btn {
+      background-color: crimson;
+      color: white;
+    }
+    .duzenle-btn {
+      background-color: dodgerblue;
+      color: white;
+    }
+    .toplam {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .koy-baslik {
+      margin-top: 25px;
+      font-size: 18px;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+  </style>
+</head>
+<body>
+  <h2>Yem Sipariş Takip</h2>
+  <input type="text" id="siparisInput" placeholder="küçükdere Rafet 5 besi 2 süt">
+
+  <div>
+    <button onclick="siparisEkle()">Ekle</button>
+    <button onclick="tumunuSil()">Tümünü Sıfırla</button>
+  </div>
+
+  <ul id="siparisListesi"></ul>
+
+  <div class="toplam" id="toplamContainer"></div>
+  <div class="toplam" id="genelToplam"></div>
+
+<script>
+let siparisler = [];
+
+function siparisEkle() {
+  const input = document.getElementById("siparisInput");
+  const deger = input.value.trim();
+  if (deger) {
+    siparisler.push(deger);
+    input.value = "";
+    listeyiGuncelle();
+  }
+}
+
+function siparisSil(index) {
+  siparisler.splice(index, 1);
+  listeyiGuncelle();
+}
+
+function siparisDuzenle(index) {
+  const yeniDeger = prompt("Yeni sipariş girin:", siparisler[index]);
+  if (yeniDeger) {
+    siparisler[index] = yeniDeger.trim();
+    listeyiGuncelle();
+  }
+}
+
+function tumunuSil() {
+  if (confirm("Tüm siparişleri silmek istediğinize emin misiniz?")) {
+    siparisler = [];
+    listeyiGuncelle();
+  }
+}
+
+function listeyiGuncelle() {
+  const liste = document.getElementById("siparisListesi");
+  const toplamContainer = document.getElementById("toplamContainer");
+  const genelToplam = document.getElementById("genelToplam");
+  liste.innerHTML = "";
+  toplamContainer.innerHTML = "";
+  genelToplam.innerHTML = "";
+
+  const koyGruplari = {};
+  const toplamlar = {};
+  let toplamAdet = 0;
+
+  siparisler.forEach((siparis, index) => {
+    const parcalar = siparis.split(" ");
+    const koy = parcalar[0].toLowerCase();
+    const siparisIcerik = parcalar.slice(1).join(" ");
+    if (!koyGruplari[koy]) koyGruplari[koy] = [];
+    koyGruplari[koy].push({ metin: siparisIcerik, index });
+
+    for (let i = 1; i < parcalar.length - 1; i++) {
+      const adet = parseInt(parcalar[i]);
+      const urun = parcalar[i + 1];
+      if (!isNaN(adet)) {
+        toplamlar[urun] = (toplamlar[urun] || 0) + adet;
+        toplamAdet += adet;
+      }
+    }
+  });
+
+  Object.entries(koyGruplari).forEach(([koy, kayitlar]) => {
+    const baslik = document.createElement("div");
+    baslik.className = "koy-baslik";
+    baslik.textContent = koy;
+    liste.appendChild(baslik);
+
+    kayitlar.forEach(({ metin, index }) => {
+      const li = document.createElement("li");
+      li.className = "liste-item";
+
+      const span = document.createElement("span");
+      span.textContent = metin;
+
+      const duzenleBtn = document.createElement("button");
+      duzenleBtn.className = "duzenle-btn";
+      duzenleBtn.textContent = "Düzenle";
+      duzenleBtn.onclick = () => siparisDuzenle(index);
+
+      const silBtn = document.createElement("button");
+      silBtn.className = "sil-btn";
+      silBtn.textContent = "Sil";
+      silBtn.onclick = () => siparisSil(index);
+
+      li.appendChild(span);
+      li.appendChild(duzenleBtn);
+      li.appendChild(silBtn);
+      liste.appendChild(li);
+    });
+  });
+
+  const sirali = Object.entries(toplamlar).sort((a, b) => b[1] - a[1]);
+  sirali.forEach(([urun, adet]) => {
+    const div = document.createElement("div");
+    div.textContent = `${adet} ${urun}`;
+    toplamContainer.appendChild(div);
+  });
+
+  genelToplam.innerHTML = `<br><strong>Toplam Adet:</strong> ${toplamAdet}`;
+}
+</script>
+</body>
+</html>
